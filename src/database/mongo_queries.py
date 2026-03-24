@@ -2,44 +2,75 @@ import json
 from datetime import datetime
 from pymongo import MongoClient
 
-def generate_validation_report(collection, output_file="validation_report.json"):
+
+def generate_validation_report(db, output_file="data/reports/validation_report.json"):
     """
-    Runs an audit on the collection and saves the results to a JSON file.
+    Generate validation report across products, customers, and orders.
     """
-    # 1. Gather Metrics
+
+    products = db["products"]
+    customers = db["customers"]
+    orders = db["orders"]
+
     report = {
         "timestamp": datetime.now().isoformat(),
-        "total_documents": collection.count_documents({}),
-        "missing_price": collection.count_documents({"price.excl_tax": None}),
-        "invalid_stock": collection.count_documents({"availability.stock_count": {"$lt": 0}}),
-        "top_rated_under_20": collection.count_documents({
-            "rating": 5,
-            "price.excl_tax": {"$lt": 20.0}
-        }),
-        "status": "HEALTHY" # You can add logic to flag 'WARNING' if missing_price > 0
+
+        # ---------------- PRODUCTS ----------------
+        "products": {
+            "total": products.count_documents({}),
+            "missing_price": products.count_documents({"price.excl_tax": None}),
+            "invalid_stock": products.count_documents({"availability.stock_count": {"$lt": 0}})
+        },
+
+        # ---------------- CUSTOMERS ----------------
+        "customers": {
+            "total": customers.count_documents({}),
+            "missing_email": customers.count_documents({"email": None})
+        },
+
+        # ---------------- ORDERS ----------------
+        "orders": {
+            "total": orders.count_documents({}),
+            "missing_customer": orders.count_documents({"customer_id": None}),
+            "invalid_status": orders.count_documents({
+                "status": {"$nin": ["processing", "shipped", "cancelled", "delivered"]}
+            })
+        }
     }
 
-    # 2. Logic to flag Data Quality warnings
-    if report["missing_price"] > 0 or report["invalid_stock"] > 0:
+    # 🔥 RELATIONSHIP CHECK (IMPORTANT)
+    valid_customer_ids = set(c["_id"] for c in customers.find({}, {"_id": 1}))
+
+    invalid_orders = 0
+    for order in orders.find({}, {"customer_id": 1}):
+        if order["customer_id"] not in valid_customer_ids:
+            invalid_orders += 1
+
+    report["orders"]["invalid_customer_reference"] = invalid_orders
+
+    # Global status
+    report["status"] = "HEALTHY"
+    if (
+        report["products"]["missing_price"] > 0
+        or report["orders"]["invalid_customer_reference"] > 0
+    ):
         report["status"] = "DATA_QUALITY_WARNING"
 
-    # 3. Save to File
-    with open(output_file, 'w', encoding='utf-8') as f:
+    # Save report
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=4)
-    
-    print(f"📊 Validation Report generated: {output_file}")
+
+    print(f"📊 Validation report saved to {output_file}")
     return report
+
 
 if __name__ == "__main__":
     URI = "mongodb://localhost:27017/"
     DB_NAME = "bookstore_inventory"
-    COLLECTION_NAME = "products"
 
     client = MongoClient(URI)
-    collection = client[DB_NAME][COLLECTION_NAME]
+    db = client[DB_NAME]
 
-    # Generate and save the report
-    report_data = generate_validation_report(collection, output_file=f"data/reports/validation_report.json")
-    
-    # Optional: Quick console summary
-    print(f"Total: {report_data['total_documents']} | Status: {report_data['status']}")
+    report = generate_validation_report(db)
+
+    print(f"Status: {report['status']}")
