@@ -68,6 +68,9 @@ ecommerce-data-pipeline/
 │       └── data_lake.py
 │
 ├── main.py               # Pipeline orchestration
+│
+├── requirements.txt
+│
 └── README.md
 ```
 
