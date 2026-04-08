@@ -51,6 +51,12 @@ ecommerce-data-pipeline/
 ├── data/
 │   ├── raw/              # JSONL data lake
 │   └── reports/          # Validation reports
+|
+├── SQL/
+│   ├── schemas.sql              # create tables
+│   └── constraints.sql          # add FK and constraints
+│
+├── diagrams/
 │
 ├── src/
 │   ├── scraping/
