@@ -52,8 +52,7 @@ SQL Server (OLTP Relational Layer)
 
 * **ETL Layer (Python Pipeline)**
 
-moving data from MongoDB to SQL Server while transforming it into a structured relational format:
-
+  * moving data from MongoDB to SQL Server while transforming it into a structured relational format:
   * Extracting data from MongoDB collections
   * Transforming nested and semi-structured data into tabular format
   * Building relationships between entities (customers, orders, products)
@@ -62,9 +61,8 @@ moving data from MongoDB to SQL Server while transforming it into a structured r
   * Loading cleaned data into SQL Server tables
 
 
-* **OLTP Layer (SQL Server) **
-Structured transactional database optimized for operational use.
-
+* **OLTP Layer (SQL Server)**
+  * Structured transactional database optimized for operational use.
   * Storing normalized relational tables (customers, products, orders, order_items)
   * Enforcing data integrity using primary and foreign keys
   * Applying constraints to ensure data quality and consistency
