@@ -56,6 +56,7 @@ CREATE TABLE inventory.products (
     rating             INT             CHECK (rating BETWEEN 1 AND 5),
     stock_count        INT             CHECK (stock_count >= 0),
     is_in_stock        BIT,
+    price              DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     scraped_at         DATETIME2       DEFAULT CURRENT_TIMESTAMP
 );
 GO

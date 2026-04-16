@@ -9,12 +9,6 @@ Purpose:
 USE ecommerce_db;
 GO
 
-/* =========================
-   UNIQUE CONSTRAINTS
-========================= */
-ALTER TABLE crm.customers
-ADD CONSTRAINT UQ_customers_email UNIQUE (email);
-GO
 
 
 /* =========================
