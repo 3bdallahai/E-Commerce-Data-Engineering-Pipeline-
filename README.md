@@ -12,7 +12,16 @@ The goal is to simulate a **real-world data pipeline architecture** using modern
 ## 🏗️ Architecture
 
 ```
-Web Scraping → JSONL Data Lake → MongoDB (Staging Layer) → Validation Reports
+Web Scraping
+      ↓
+JSONL Data Lake (Raw Storage)
+      ↓
+MongoDB (Staging / NoSQL Layer)
+      ↓
+Python ETL Pipeline
+      ↓
+SQL Server (OLTP Relational Layer)
+
 ```
 
 ### 🔹 Layers Explained
@@ -41,6 +50,26 @@ Web Scraping → JSONL Data Lake → MongoDB (Staging Layer) → Validation Repo
 * **Validation Layer**
   Data quality checks are performed and saved as **validation reports**.
 
+* **ETL Layer (Python Pipeline)**
+
+moving data from MongoDB to SQL Server while transforming it into a structured relational format:
+
+  * Extracting data from MongoDB collections
+  * Transforming nested and semi-structured data into tabular format
+  * Building relationships between entities (customers, orders, products)
+  * Aggregating order-level data into order items
+  * Enriching data using lookup mappings (e.g., product price and IDs)
+  * Loading cleaned data into SQL Server tables
+
+
+* **OLTP Layer (SQL Server) **
+Structured transactional database optimized for operational use.
+
+  * Storing normalized relational tables (customers, products, orders, order_items)
+  * Enforcing data integrity using primary and foreign keys
+  * Applying constraints to ensure data quality and consistency
+  * Indexing key columns for performance optimization
+  * Storing derived operational fields (e.g., total order amount)
 ---
 
 ## 📂 Project Structure
@@ -54,9 +83,12 @@ ecommerce-data-pipeline/
 |
 ├── SQL/
 │   ├── schemas.sql              # create tables
-│   └── constraints.sql          # add FK and constraints
+│   ├── constraints.sql          # add FK and constraints
+│   └── post_load.sql
 │
 ├── diagrams/
+│   ├── ERD_digram.png
+│   └── OLTP_DB_diagram.png
 │
 ├── src/
 │   ├── scraping/
@@ -69,6 +101,12 @@ ecommerce-data-pipeline/
 │   ├── database/
 │   │   ├── mongo_loader.py
 │   │   └── mongo_queries.py
+│   │
+│   ├── scraping/
+│   │   ├── customers_table.py
+│   │   ├── order_items_table.py
+│   │   ├── order_table.py
+│   │   └── products_table.py
 │   │
 │   └── storage/
 │       └── data_lake.py
@@ -125,6 +163,34 @@ ecommerce-data-pipeline/
   * Data consistency
 * Results stored as JSON reports
 
+
+### 🔹 ETL Layer (Python Pipeline)
+
+* Extracted data from MongoDB collections (customers, products, orders)
+* Built transformation logic to convert semi-structured data into relational format
+* Flattened nested structures (e.g., product availability and pricing)
+* Normalized inconsistent values (e.g., order status standardization)
+* Created product lookup mapping for data enrichment
+* Aggregated order data into order_items using frequency-based logic
+* Handled missing and inconsistent data safely
+* Loaded transformed data into SQL Server using batch inserts
+* Optimized performance using fast_executemany
+
+
+### 🔹 OLTP Layer (SQL Server)
+
+* Designed normalized relational schema for e-commerce domain
+* Implemented core tables:
+    * customers
+    * products
+    * orders
+    * order_items
+* Defined primary keys and foreign key relationships
+* Enforced data integrity using constraints (NOT NULL, CHECK, UNIQUE)
+* Added indexing on frequently queried columns
+* Introduced derived field total_amount in orders table
+* Supported efficient transactional queries and joins
+* Ensured referential integrity across all tables
 ---
 
 ## 🧠 Key Concepts Demonstrated
@@ -136,6 +202,7 @@ ecommerce-data-pipeline/
 * Indexing for query optimization
 * Data quality validation and reporting
 * Modular pipeline architecture
+* Multi-layer data engineering pipeline (Raw → Staging → OLTP)
 
 ---
 
@@ -154,13 +221,12 @@ ecommerce-data-pipeline/
 * MongoDB
 * JSON / JSONL
 * Regex (Data Parsing)
+* PyODBC
 
 ---
 
 ## 🚧 Next Steps
 
-* Load data into a relational database (MySQL)
-* Design normalized or star schema
 * Build analytics layer
 * Add dashboard for visualization
 
